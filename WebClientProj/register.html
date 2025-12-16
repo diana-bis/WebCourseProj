@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Page</title>
+</head>
+
+<body>
+    <h1>Register</h1>
+    <p>Please fill in the form to create your account.</p>
+
+    <form id="registerForm" onsubmit="return validateForm()">
+        <label for="username">Username:</label><br>
+        <input type="text" id="username" name="username" required><br><br>
+
+        <label for="firstname">First Name:</label><br>
+        <input type="text" id="firstname" name="firstname" required><br><br>
+
+        <label for="password">Password:</label><br>
+        <input type="password" id="password" name="password"><br><br>
+
+        <label for="confirm">Confirm Password:</label><br>
+        <input type="password" id="confirm" name="confirm" required><br><br>
+
+        <label for="image">Image URL:</label><br>
+        <input type="url" id="image" name="image" placeholder="https://example.com/photo.jpg" required><br><br>
+
+        <button type="submit">Register</button>
+    </form>
+
+    <p>Already registered? <a href="login.html">Go to Login</a></p>
+
+    <script src="register.js"></script>
+
+</body>
+
+</html>

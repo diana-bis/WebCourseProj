@@ -1,0 +1,25 @@
+{
+    "student": {
+        "name": "Diana Bistrik",
+        "id": "324091818"
+    },
+    "links": [
+        {
+            "text": "My GitHub page",
+            "url": "https://github.com/diana-bis"
+        },
+        {
+            "text": "My GitHub live web page",
+            "url": "https://diana-bis.github.io/WebDevCourse_HW/WebClientProj/"
+        },
+        {
+            "text": "Login page",
+            "url": "login.html"
+        },
+        {
+            "text": "Registration page",
+            "url": "register.html"
+        }
+    ],
+    "apiKey": "AIzaSyC14NLoxU9amQ3IivPeIhMmEm6HeajT4Qo"
+}

@@ -1,0 +1,145 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background-color: #fafafa;
+}
+
+h2 {
+    margin-bottom: 10px;
+}
+
+.search-bar {
+    margin: 20px 0;
+    display: flex;
+    gap: 10px;
+}
+
+#searchInput {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+}
+
+#searchBtn {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 4px;
+    background-color: #0073e6;
+    color: white;
+    cursor: pointer;
+}
+
+#searchBtn:hover {
+    background-color: #005bb5;
+}
+
+.results-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.video-card {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    width: 250px;
+    padding: 10px;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.video-card img {
+    width: 100%;
+    border-radius: 6px;
+}
+
+.video-title {
+    font-weight: bold;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 6px 0;
+}
+
+.video-card p {
+    margin: 4px 0;
+    font-size: 14px;
+}
+
+.favBtn {
+    margin-top: 5px;
+    background-color: #ff5050;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
+.favBtn:hover {
+    background-color: #d63636;
+}
+
+/* For the Modal player */
+
+/* Make thumbnail/title look clickable */
+.clickable {
+    cursor: pointer;
+}
+
+/* Modal overlay */
+.modal {
+    display: none;
+    /* hidden by default */
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 9999;
+    padding: 20px;
+}
+
+/* show modal */
+.modal.open {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Modal box */
+.modal-content {
+    position: relative;
+    background: white;
+    border-radius: 10px;
+    padding: 16px;
+    width: min(900px, 95vw);
+}
+
+/* Close button */
+.modal-close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font-size: 30px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 2;
+}
+
+/* Player keeps 16:9 ratio */
+.modal-player {
+    margin-top: 30px;
+    aspect-ratio: 16 / 9;
+}
+
+.modal-player iframe {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    border: 0;
+}
