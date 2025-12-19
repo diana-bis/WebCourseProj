@@ -21,11 +21,23 @@ function loadUserHeader() {
   }
 
   header.innerHTML = `
-    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 20px; padding: 10px;">
-      <img src="${user.image}" alt="Profile" width="40" height="40" style="border-radius: 50%;">
-      <span>Welcome ${user.firstname}!</span>
-      <button id="logoutBtn">Logout</button>
-    </div>
+    <nav class="navbar navbar-light bg-white shadow-sm px-4">
+      <div class="container-fluid justify-content-end gap-3">
+        <img
+          src="${user.image}"
+          alt="Profile"
+          width="40"
+          height="40"
+          class="rounded-circle"
+        />
+        <span class="fw-semibold">
+          Welcome ${user.firstname}!
+        </span>
+        <button id="logoutBtn" class="btn btn-outline-danger btn-sm">
+          Logout
+        </button>
+      </div>
+    </nav>
   `;
 
   // Add logout functionality

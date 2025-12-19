@@ -1,3 +1,10 @@
+window.addEventListener("DOMContentLoaded", () => {
+    if (sessionStorage.getItem("currentUserId")) {
+        // Already logged in - go to search
+        window.location.replace("search.html");
+    }
+});
+
 async function loadConfig() {
     try {
         const response = await fetch("config.json");
