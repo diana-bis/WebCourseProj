@@ -22,23 +22,40 @@ function loadUserHeader() {
 
   header.innerHTML = `
     <nav class="navbar navbar-light bg-white shadow-sm px-4">
-      <div class="container-fluid justify-content-end gap-3">
-        <img
-          src="${user.image}"
-          alt="Profile"
-          width="40"
-          height="40"
-          class="rounded-circle"
-        />
-        <span class="fw-semibold">
-          Welcome ${user.firstname}!
-        </span>
-        <button id="logoutBtn" class="btn btn-outline-danger btn-sm">
-          Logout
-        </button>
+      <div class="container-fluid d-flex justify-content-between align-items-center">
+
+        <!-- Left side -->
+        <div class="d-flex gap-3">
+          <a href="search.html" id="searchLink" class="nav-link fw-semibold">🔍 Search</a>
+          <a href="playlist.html" class="nav-link fw-semibold">🎵 My Playlists</a>
+        </div>
+
+        <!-- Right side -->
+        <div class="d-flex align-items-center gap-3">
+          <img
+            src="${user.image}"
+            alt="Profile"
+            width="40"
+            height="40"
+            class="rounded-circle"
+          />
+          <span class="fw-semibold">
+            Welcome ${user.firstname}!
+          </span>
+          <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Logout</button>
+        </div>
+
       </div>
     </nav>
   `;
+
+  // Preserve last search query when clicking Search in header
+  const searchLink = document.getElementById("searchLink");
+  const lastSearchUrl = sessionStorage.getItem("lastSearchUrl");
+
+  if (searchLink && lastSearchUrl) {
+    searchLink.href = lastSearchUrl;
+  }
 
   // Add logout functionality
   const logoutBtn = document.getElementById("logoutBtn");

@@ -103,6 +103,8 @@ async function searchYouTube() {
     const params = new URLSearchParams(window.location.search);
     params.set("q", query);
     history.pushState({}, "", `${window.location.pathname}?${params}`);
+    // Remember last search URL
+    sessionStorage.setItem("lastSearchUrl", window.location.href);
 
     resultsDiv.innerHTML = "<p>Loading...</p>";
 
@@ -334,7 +336,7 @@ function showToast(message, playlistName) {
             <div class="toast-body">
                 ${message}
                 <br>
-                <a href="playlists.html?name=${encodeURIComponent(playlistName)}" class="text-white text-decoration-underline">
+                <a href="playlist.html?name=${encodeURIComponent(playlistName)}" class="text-white text-decoration-underline">
                     Go to playlist
                 </a>
             </div>
