@@ -7,6 +7,11 @@ const modal = document.getElementById("videoModal");
 const playerFrame = document.getElementById("playerFrame");
 
 let bootstrapModal;
+
+let addToFavModal;
+let pendingVideo = null;
+let pendingFavButton = null;
+
 // Prevents access without login
 window.addEventListener("DOMContentLoaded", async () => {
     if (!sessionStorage.getItem("currentUserId")) {
@@ -18,7 +23,44 @@ window.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("videoModal")
     );
 
+    addToFavModal = new bootstrap.Modal(
+        document.getElementById("addToFavModal")
+    );
+
+
     await loadConfig();
+
+    // Load search from query string if exists
+    const params = new URLSearchParams(window.location.search);
+    const queryFromUrl = params.get("q");
+
+    if (queryFromUrl) {
+        searchInput.value = queryFromUrl;
+        searchYouTube(); // run search automatically
+    }
+});
+
+const playlistSelect = document.getElementById("playlistSelect");
+const newPlaylistInput = document.getElementById("newPlaylistInput");
+
+// Add to fav - when selecting existing playlist
+playlistSelect.addEventListener("change", () => {
+    if (playlistSelect.value) {
+        newPlaylistInput.value = "";
+        newPlaylistInput.disabled = true;
+    } else {
+        newPlaylistInput.disabled = false;
+    }
+});
+
+// Add to fav - when typing a new playlist
+newPlaylistInput.addEventListener("input", () => {
+    if (newPlaylistInput.value.trim()) {
+        playlistSelect.value = "";
+        playlistSelect.disabled = true;
+    } else {
+        playlistSelect.disabled = false;
+    }
 });
 
 async function loadConfig() {
@@ -57,6 +99,11 @@ async function searchYouTube() {
         return;
     }
 
+    // Update URL query string
+    const params = new URLSearchParams(window.location.search);
+    params.set("q", query);
+    history.pushState({}, "", `${window.location.pathname}?${params}`);
+
     resultsDiv.innerHTML = "<p>Loading...</p>";
 
     try {
@@ -92,7 +139,9 @@ async function searchYouTube() {
         // Clear old results
         resultsDiv.innerHTML = "";
 
-        // 3️⃣ Create cards
+        const { user } = getCurrentUser();
+
+        // Create cards
         searchData.items.forEach(item => {
             const videoId = item.id.videoId;
             const title = item.snippet.title;
@@ -126,6 +175,22 @@ async function searchYouTube() {
                 el.addEventListener("click", () => openModal(videoId));
             });
 
+            const favBtn = card.querySelector(".favBtn");
+
+            if (isVideoInFavorites(user, videoId)) {
+                markAsInFavorite(favBtn);
+            } else {
+                favBtn.addEventListener("click", () => {
+                    pendingFavButton = favBtn;
+                    openAddToFavoritesDialog({
+                        videoId,
+                        title,
+                        thumbnail,
+                        channel
+                    });
+                });
+            }
+
             resultsDiv.appendChild(card);
         });
     } catch (err) {
@@ -149,4 +214,135 @@ function formatViews(views) {
     if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
     if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
     return num.toString();
+}
+
+function getCurrentUser() {
+    const userId = Number(sessionStorage.getItem("currentUserId"));
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+    return {
+        users,
+        user: users.find(u => u.id === userId)
+    };
+}
+
+function isVideoInFavorites(user, videoId) {
+    if (!user.playlists) return false;
+    return user.playlists.some(pl =>
+        pl.videos.some(v => v.videoId === videoId)
+    );
+}
+
+function markAsInFavorite(favBtn) {
+    favBtn.textContent = "✓ In Favorites";
+    favBtn.classList.remove("btn-outline-primary");
+    favBtn.classList.add("btn-secondary");
+    favBtn.disabled = true;
+}
+
+function openAddToFavoritesDialog(video) {
+    pendingVideo = video;
+
+    const { user } = getCurrentUser();
+    if (!user.playlists) user.playlists = [];
+
+    const select = document.getElementById("playlistSelect");
+    const input = document.getElementById("newPlaylistInput");
+
+    // Reset state
+    select.disabled = false;
+    input.disabled = false;
+    select.innerHTML = `<option value="">-- Select playlist --</option>`;
+    input.value = "";
+
+    user.playlists.forEach(pl => {
+        const opt = document.createElement("option");
+        opt.value = pl.name;
+        opt.textContent = pl.name;
+        select.appendChild(opt);
+    });
+
+    addToFavModal.show();
+}
+
+document.getElementById("confirmAddToFav").addEventListener("click", () => {
+    if (!pendingVideo) return;
+    const select = document.getElementById("playlistSelect");
+    const input = document.getElementById("newPlaylistInput");
+
+    const selectedPlaylist = select.value;
+    const newPlaylistName = input.value.trim();
+
+    if (!selectedPlaylist && !newPlaylistName) {
+        alert("Please select or create a playlist");
+        return;
+    }
+
+    const { users, user } = getCurrentUser();
+    if (!user.playlists) user.playlists = [];
+
+    let playlist;
+
+    // Case 1: existing playlist selected
+    if (selectedPlaylist) {
+        playlist = user.playlists.find(p => p.name === selectedPlaylist);
+    }
+
+    // Case 2: new playlist name entered
+    if (newPlaylistName) {
+        const nameExists = user.playlists.some(p => p.name === newPlaylistName);
+        if (nameExists) {
+            alert("A playlist with this name already exists. Please select it from the list.");
+            return;
+        }
+
+        playlist = {
+            id: Date.now(),
+            name: newPlaylistName,
+            videos: []
+        };
+        user.playlists.push(playlist);
+    }
+
+    // Prevents duplicate video (extra check)
+    const exists = playlist.videos.some(v => v.videoId === pendingVideo.videoId);
+    if (exists) {
+        alert("This video is already in this playlist");
+        return;
+    }
+
+    playlist.videos.push(pendingVideo);
+    localStorage.setItem("users", JSON.stringify(users));
+
+    addToFavModal.hide();
+    showToast(`Saved to "${playlist.name}"`, playlist.name);
+
+    if (pendingFavButton) {
+        markAsInFavorite(pendingFavButton);
+        pendingFavButton = null;
+    }
+
+    pendingVideo = null;
+});
+
+
+
+function showToast(message, playlistName) {
+    const toast = document.createElement("div");
+    toast.className = "toast align-items-center text-bg-success show position-fixed bottom-0 end-0 m-3";
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                ${message}
+                <br>
+                <a href="playlists.html?name=${encodeURIComponent(playlistName)}" class="text-white text-decoration-underline">
+                    Go to playlist
+                </a>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto"></button>
+        </div>
+    `;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => toast.remove(), 4000);
 }

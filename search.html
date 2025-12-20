@@ -50,6 +50,42 @@
         </div>
     </div>
 
+    <!-- Add to Favorites Modal -->
+    <div class="modal fade" id="addToFavModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Add to Playlist</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Choose existing playlist</label>
+                        <select id="playlistSelect" class="form-select">
+                            <option value="">-- Select playlist --</option>
+                        </select>
+                    </div>
+
+                    <div class="text-center my-2">OR</div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Create new playlist</label>
+                        <input type="text" id="newPlaylistInput" class="form-control" placeholder="New playlist name">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="confirmAddToFav">Add</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script src="userHeader.js"></script>
