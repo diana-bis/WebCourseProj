@@ -15,6 +15,13 @@ const emptyMessage = document.getElementById("emptyMessage");
 
 let selectedPlaylistId = null;
 
+const playPlaylistBtn = document.getElementById("playPlaylistBtn");
+const playerWrapper = document.getElementById("playerWrapper");
+
+let ytPlayerInstance;
+let playingPlaylist = [];
+let currentVideoIndex = 0;
+
 window.addEventListener("DOMContentLoaded", () => {
     loadPlaylists(true);
 });
@@ -56,6 +63,8 @@ function selectPlaylist(playlistId) {
     if (!playlist) return;
 
     selectedPlaylistId = playlistId;
+    playPlaylistBtn.disabled = false;
+
     playlistTitle.textContent = playlist.name;
     emptyMessage.style.display = "none";
     songsContainer.innerHTML = "";
@@ -66,7 +75,7 @@ function selectPlaylist(playlistId) {
         return;
     }
 
-    playlist.videos.forEach(video => {
+    playlist.videos.forEach((video, index) => {
         const col = document.createElement("div");
         col.className = "col-md-2 col-sm-4";
 
@@ -75,10 +84,38 @@ function selectPlaylist(playlistId) {
                 <img src="${video.thumbnail}" class="card-img-top" />
                 <div class="card-body">
                     <h6 class="card-title">${video.title}</h6>
-                    <p class="mb-1"><strong>Channel:</strong> ${video.channel}</p>
+                    <button class="btn btn-outline-danger mt-auto removeBtn">Remove</button>
                 </div>
             </div>
         `;
+
+        const removeBtn = col.querySelector(".removeBtn");
+
+        removeBtn.addEventListener("click", (e) => {
+            e.stopPropagation(); // 🔥 prevents play click
+
+            if (!confirm("Remove this video from playlist?")) return;
+
+            const { users, user } = getCurrentUser();
+            const playlist = user.playlists.find(p => p.id === selectedPlaylistId);
+
+            // Remove video by index
+            playlist.videos.splice(index, 1);
+
+            localStorage.setItem("users", JSON.stringify(users));
+
+            // Refresh playlist UI
+            selectPlaylist(selectedPlaylistId);
+        });
+
+
+        col.addEventListener("click", () => {
+            playingPlaylist = playlist.videos;   // full playlist
+            currentVideoIndex = index;            // start from clicked song
+
+            playerWrapper.classList.remove("d-none");
+            playCurrentVideo();
+        });
 
         songsContainer.appendChild(col);
     });
@@ -121,3 +158,45 @@ function getPlaylistNameFromURL() {
     return params.get("name");
 }
 
+function onYouTubeIframeAPIReady() {
+    ytPlayerInstance = new YT.Player("ytPlayer", {
+        height: "360",
+        width: "640",
+        events: {
+            onStateChange: onPlayerStateChange
+        }
+    });
+}
+
+function onPlayerStateChange(event) {
+    if (event.data === YT.PlayerState.ENDED) {
+        currentVideoIndex++;
+        playCurrentVideo();
+    }
+}
+
+function playCurrentVideo() {
+    if (!ytPlayerInstance) return;
+    if (currentVideoIndex >= playingPlaylist.length) return;
+
+    ytPlayerInstance.loadVideoById(
+        playingPlaylist[currentVideoIndex].videoId
+    );
+}
+
+
+playPlaylistBtn.addEventListener("click", () => {
+    const { user } = getCurrentUser();
+    const playlist = user.playlists.find(p => p.id === selectedPlaylistId);
+
+    if (!playlist || playlist.videos.length === 0) {
+        alert("Playlist is empty");
+        return;
+    }
+
+    playingPlaylist = playlist.videos;
+    currentVideoIndex = 0;
+
+    playerWrapper.classList.remove("d-none");
+    playCurrentVideo();
+});
