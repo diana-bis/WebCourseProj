@@ -312,7 +312,11 @@ document.getElementById("confirmAddToFav").addEventListener("click", () => {
         return;
     }
 
-    playlist.videos.push(pendingVideo);
+    playlist.videos.push({
+        ...pendingVideo,
+        rating: 0
+    });
+
     localStorage.setItem("users", JSON.stringify(users));
 
     addToFavModal.hide();

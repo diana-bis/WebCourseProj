@@ -22,6 +22,13 @@ let ytPlayerInstance;
 let playingPlaylist = [];
 let currentVideoIndex = 0;
 
+let currentSortedVideos = [];
+const sortSelect = document.getElementById("sortSelect");
+
+sortSelect.addEventListener("change", () => {
+    selectPlaylist(selectedPlaylistId);
+});
+
 window.addEventListener("DOMContentLoaded", () => {
     loadPlaylists(true);
 });
@@ -75,24 +82,67 @@ function selectPlaylist(playlistId) {
         return;
     }
 
-    playlist.videos.forEach((video, index) => {
+    let videos = [...playlist.videos];
+
+    if (sortSelect.value === "rating-desc") {
+        videos.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    }
+
+    if (sortSelect.value === "rating-asc") {
+        videos.sort((a, b) => (a.rating || 0) - (b.rating || 0));
+    }
+
+    currentSortedVideos = videos;
+
+    videos.forEach((video, index) => {
         const col = document.createElement("div");
-        col.className = "col-md-2 col-sm-4";
+        col.className = "col-md-3 col-sm-4";
 
         col.innerHTML = `
             <div class="card h-100 shadow-sm">
                 <img src="${video.thumbnail}" class="card-img-top" />
-                <div class="card-body">
-                    <h6 class="card-title">${video.title}</h6>
-                    <button class="btn btn-outline-danger mt-auto removeBtn">Remove</button>
-                </div>
+                    <div class="card-body text-center">
+                        <h6 class="card-title">${video.title}</h6>
+                            <div class="mb-2">
+                                ${[1, 2, 3, 4, 5].map(star => `
+                                    <span
+                                        class="fs-5 me-1 ${video.rating >= star ? 'text-warning' : 'text-secondary'}"
+                                        role="button"
+                                        data-star="${star}">★
+                                    </span>
+                                `).join("")}
+                            </div>
+                        
+                        <button class="btn btn-outline-danger btn-sm removeBtn">Remove</button>
+                    </div> 
             </div>
         `;
 
         const removeBtn = col.querySelector(".removeBtn");
 
+        col.querySelectorAll("[data-star]").forEach(starEl => {
+            starEl.addEventListener("click", (e) => {
+                e.stopPropagation();
+
+                const rating = Number(starEl.dataset.star);
+
+                const { users, user } = getCurrentUser();
+                const playlist = user.playlists.find(p => p.id === selectedPlaylistId);
+
+                const realVideo = playlist.videos.find(
+                    v => v.videoId === video.videoId
+                );
+
+                realVideo.rating = rating;
+
+                localStorage.setItem("users", JSON.stringify(users));
+
+                selectPlaylist(selectedPlaylistId);
+            });
+        });
+
         removeBtn.addEventListener("click", (e) => {
-            e.stopPropagation(); // 🔥 prevents play click
+            e.stopPropagation(); // prevents play click
 
             if (!confirm("Remove this video from playlist?")) return;
 
@@ -100,6 +150,9 @@ function selectPlaylist(playlistId) {
             const playlist = user.playlists.find(p => p.id === selectedPlaylistId);
 
             // Remove video by index
+            const index = playlist.videos.findIndex(
+                v => v.videoId === video.videoId
+            );
             playlist.videos.splice(index, 1);
 
             localStorage.setItem("users", JSON.stringify(users));
@@ -108,9 +161,8 @@ function selectPlaylist(playlistId) {
             selectPlaylist(selectedPlaylistId);
         });
 
-
         col.addEventListener("click", () => {
-            playingPlaylist = playlist.videos;   // full playlist
+            playingPlaylist = videos;   // full playlist
             currentVideoIndex = index;            // start from clicked song
 
             playerWrapper.classList.remove("d-none");
@@ -194,7 +246,7 @@ playPlaylistBtn.addEventListener("click", () => {
         return;
     }
 
-    playingPlaylist = playlist.videos;
+    playingPlaylist = currentSortedVideos;
     currentVideoIndex = 0;
 
     playerWrapper.classList.remove("d-none");
