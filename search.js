@@ -84,6 +84,12 @@ async function loadConfig() {
 
 searchBtn.addEventListener("click", searchYouTube);
 
+searchInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        searchYouTube();
+    }
+});
+
 function openModal(videoId) {
     // autoplay=1 starts playing immediately
     playerFrame.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;

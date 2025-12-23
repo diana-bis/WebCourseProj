@@ -25,15 +25,23 @@ let currentVideoIndex = 0;
 let currentSortedVideos = [];
 const sortSelect = document.getElementById("sortSelect");
 
+const playlistSearchInput = document.getElementById("playlistSearchInput");
+
+const deletePlaylistBtn = document.getElementById("deletePlaylistBtn");
+
+playlistSearchInput.addEventListener("input", () => {
+    selectPlaylist(selectedPlaylistId);
+});
+
 sortSelect.addEventListener("change", () => {
     selectPlaylist(selectedPlaylistId);
 });
 
 window.addEventListener("DOMContentLoaded", () => {
-    loadPlaylists(true);
+    loadPlaylists();
 });
 
-function loadPlaylists(selectFromURL = false) {
+function loadPlaylists() {
     const { user } = getCurrentUser();
     playlistList.innerHTML = "";
 
@@ -83,6 +91,7 @@ function selectPlaylist(playlistId) {
 
     selectedPlaylistId = playlistId;
     playPlaylistBtn.disabled = false;
+    deletePlaylistBtn.disabled = false;
 
     playlistTitle.textContent = playlist.name;
     emptyMessage.style.display = "none";
@@ -96,6 +105,28 @@ function selectPlaylist(playlistId) {
 
     let videos = [...playlist.videos];
 
+    // Search in playlist
+    const searchText = playlistSearchInput.value.toLowerCase().trim();
+    if (searchText) {
+        videos = videos.filter(video =>
+            video.title.toLowerCase().includes(searchText)
+        );
+    }
+
+    // Sort alphabetically
+    if (sortSelect.value === "az") {
+        videos.sort((a, b) =>
+            a.title.localeCompare(b.title)
+        );
+    }
+
+    if (sortSelect.value === "za") {
+        videos.sort((a, b) =>
+            b.title.localeCompare(a.title)
+        );
+    }
+
+    // Sort by rating
     if (sortSelect.value === "rating-desc") {
         videos.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     }
@@ -263,4 +294,33 @@ playPlaylistBtn.addEventListener("click", () => {
 
     playerWrapper.classList.remove("d-none");
     playCurrentVideo();
+});
+
+
+deletePlaylistBtn.addEventListener("click", () => {
+    if (!selectedPlaylistId) return;
+
+    if (!confirm("Are you sure you want to delete this playlist?")) return;
+
+    const { users, user } = getCurrentUser();
+
+    const index = user.playlists.findIndex(
+        p => p.id === selectedPlaylistId
+    );
+
+    if (index === -1) return;
+
+    user.playlists.splice(index, 1);
+    localStorage.setItem("users", JSON.stringify(users));
+
+    selectedPlaylistId = null;
+    songsContainer.innerHTML = "";
+    playlistTitle.textContent = "Select a playlist";
+    emptyMessage.style.display = "block";
+    playPlaylistBtn.disabled = true;
+    deletePlaylistBtn.disabled = true;
+
+    // Reload playlist list
+    history.replaceState({}, "", "playlist.html");
+    loadPlaylists();
 });
