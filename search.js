@@ -27,6 +27,9 @@ window.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("addToFavModal")
     );
 
+    modal.addEventListener("hidden.bs.modal", () => {
+        playerFrame.src = "";
+    });
 
     await loadConfig();
 
@@ -320,7 +323,7 @@ document.getElementById("confirmAddToFav").addEventListener("click", () => {
     localStorage.setItem("users", JSON.stringify(users));
 
     addToFavModal.hide();
-    showToast(`Saved to "${playlist.name}"`, playlist.name);
+    showToast(`Saved to "${playlist.name}"`, playlist.id);
 
     if (pendingFavButton) {
         markAsInFavorite(pendingFavButton);
@@ -332,7 +335,7 @@ document.getElementById("confirmAddToFav").addEventListener("click", () => {
 
 
 
-function showToast(message, playlistName) {
+function showToast(message, playlistId) {
     const toast = document.createElement("div");
     toast.className = "toast align-items-center text-bg-success show position-fixed bottom-0 end-0 m-3";
     toast.innerHTML = `
@@ -340,7 +343,7 @@ function showToast(message, playlistName) {
             <div class="toast-body">
                 ${message}
                 <br>
-                <a href="playlist.html?name=${encodeURIComponent(playlistName)}" class="text-white text-decoration-underline">
+                <a href="playlist.html?name=${playlistId}" class="text-white text-decoration-underline">
                     Go to playlist
                 </a>
             </div>

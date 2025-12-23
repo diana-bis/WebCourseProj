@@ -43,24 +43,36 @@ function loadPlaylists(selectFromURL = false) {
         return;
     }
 
-    const playlistNameFromURL = getPlaylistNameFromURL();
+    const playlistIdFromURL = getPlaylistIdFromURL();
+    let firstPlaylistId = null;
+    let foundFromURL = false;
 
     user.playlists.forEach(pl => {
         const li = document.createElement("li");
         li.className = "list-group-item list-group-item-action";
         li.textContent = pl.name;
 
+        if (!firstPlaylistId) firstPlaylistId = pl.id;
+
+        if (playlistIdFromURL === pl.id) {
+            selectPlaylist(pl.id);
+            li.classList.add("active");
+            foundFromURL = true;
+        }
+
         li.addEventListener("click", () => {
+            history.pushState({}, "", `playlist.html?id=${pl.id}`);
             selectPlaylist(pl.id);
         });
 
         playlistList.appendChild(li);
-
-        // If playlist matches the one in the URL, select to show it
-        if (selectFromURL && playlistNameFromURL === pl.name) {
-            selectPlaylist(pl.id);
-        }
     });
+
+    // Load first playlist in list
+    if (!foundFromURL && firstPlaylistId) {
+        history.replaceState({}, "", `playlist.html?id=${firstPlaylistId}`);
+        selectPlaylist(firstPlaylistId);
+    }
 }
 
 
@@ -205,9 +217,9 @@ document.getElementById("createPlaylistBtn").addEventListener("click", () => {
     modal.hide();
 });
 
-function getPlaylistNameFromURL() {
+function getPlaylistIdFromURL() {
     const params = new URLSearchParams(window.location.search);
-    return params.get("name");
+    return Number(params.get("id"));
 }
 
 function onYouTubeIframeAPIReady() {
