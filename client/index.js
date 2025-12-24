@@ -1,7 +1,7 @@
 window.addEventListener("DOMContentLoaded", () => {
     if (sessionStorage.getItem("currentUserId")) {
         // Already logged in - go to search
-        window.location.replace("client/search.html");
+        window.location.replace("search.html");
     }
 });
 

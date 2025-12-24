@@ -14,11 +14,11 @@
         },
         {
             "text": "Login page",
-            "url": "client/login.html"
+            "url": "login.html"
         },
         {
             "text": "Registration page",
-            "url": "client/register.html"
+            "url": "register.html"
         }
     ],
     "apiKey": "AIzaSyA_NoMXfOPBP86MX8TpU6EKbXfvNl5FXK0"
