@@ -1,13 +1,13 @@
 window.addEventListener("DOMContentLoaded", () => {
     if (sessionStorage.getItem("currentUserId")) {
         // Already logged in - go to search
-        window.location.replace("search.html");
+        window.location.replace("client/search.html");
     }
 });
 
 async function loadConfig() {
     try {
-        const response = await fetch("config.json");
+        const response = await fetch("client/config.json");
         const config = await response.json();
 
         const content = document.getElementById("content");
