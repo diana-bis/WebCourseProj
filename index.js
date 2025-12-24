@@ -7,7 +7,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
 async function loadConfig() {
     try {
-        const response = await fetch("client/config.json");
+        const response = await fetch("config.json");
         const config = await response.json();
 
         const content = document.getElementById("content");

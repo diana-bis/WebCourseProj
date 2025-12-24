@@ -10,15 +10,15 @@
         },
         {
             "text": "My GitHub live web page",
-            "url": "https://diana-bis.github.io/WebCourseProj/"
+            "url": "https://diana-bis.github.io/WebCourseProj"
         },
         {
             "text": "Login page",
-            "url": "login.html"
+            "url": "client/login.html"
         },
         {
             "text": "Registration page",
-            "url": "register.html"
+            "url": "client/register.html"
         }
     ],
     "apiKey": "AIzaSyA_NoMXfOPBP86MX8TpU6EKbXfvNl5FXK0"
