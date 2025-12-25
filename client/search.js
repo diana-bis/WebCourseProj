@@ -11,12 +11,19 @@ let bootstrapModal;
 let addToFavModal;
 let pendingVideo = null;
 let pendingFavButton = null;
+let userPlaylistsCache = [];
 
 // Prevents access without login
 window.addEventListener("DOMContentLoaded", async () => {
-    if (!sessionStorage.getItem("currentUserId")) {
+    const userId = getCurrentUserId();
+    if (!userId) {
         window.location.replace("login.html");
         return;
+    }
+
+    const res = await fetch(`/api/playlists/${userId}`);
+    if (res.ok) {
+        userPlaylistsCache = await res.json();
     }
 
     bootstrapModal = new bootstrap.Modal(
@@ -150,7 +157,8 @@ async function searchYouTube() {
         // Clear old results
         resultsDiv.innerHTML = "";
 
-        const { user } = getCurrentUser();
+        const userId = getCurrentUserId();
+        if (!userId) return;
 
         // Create cards
         searchData.items.forEach(item => {
@@ -188,19 +196,19 @@ async function searchYouTube() {
 
             const favBtn = card.querySelector(".favBtn");
 
-            if (isVideoInFavorites(user, videoId)) {
+            if (isVideoInFavorites(videoId)) {
                 markAsInFavorite(favBtn);
-            } else {
-                favBtn.addEventListener("click", () => {
-                    pendingFavButton = favBtn;
-                    openAddToFavoritesDialog({
-                        videoId,
-                        title,
-                        thumbnail,
-                        channel
-                    });
-                });
             }
+
+            favBtn.addEventListener("click", () => {
+                pendingFavButton = favBtn;
+                openAddToFavoritesDialog({
+                    videoId,
+                    title,
+                    thumbnail,
+                    channel
+                });
+            });
 
             resultsDiv.appendChild(card);
         });
@@ -227,20 +235,8 @@ function formatViews(views) {
     return num.toString();
 }
 
-function getCurrentUser() {
-    const userId = Number(sessionStorage.getItem("currentUserId"));
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-    return {
-        users,
-        user: users.find(u => u.id === userId)
-    };
-}
-
-function isVideoInFavorites(user, videoId) {
-    if (!user.playlists) return false;
-    return user.playlists.some(pl =>
-        pl.videos.some(v => v.videoId === videoId)
-    );
+function getCurrentUserId() {
+    return sessionStorage.getItem("currentUserId");
 }
 
 function markAsInFavorite(favBtn) {
@@ -250,11 +246,11 @@ function markAsInFavorite(favBtn) {
     favBtn.disabled = true;
 }
 
-function openAddToFavoritesDialog(video) {
+async function openAddToFavoritesDialog(video) {
     pendingVideo = video;
 
-    const { user } = getCurrentUser();
-    if (!user.playlists) user.playlists = [];
+    const userId = getCurrentUserId();
+    if (!userId) return;
 
     const select = document.getElementById("playlistSelect");
     const input = document.getElementById("newPlaylistInput");
@@ -265,81 +261,85 @@ function openAddToFavoritesDialog(video) {
     select.innerHTML = `<option value="">-- Select playlist --</option>`;
     input.value = "";
 
-    user.playlists.forEach(pl => {
-        const opt = document.createElement("option");
-        opt.value = pl.name;
-        opt.textContent = pl.name;
-        select.appendChild(opt);
-    });
+    try {
+        const res = await fetch(`/api/playlists/${userId}`);
+        const playlists = await res.json();
+
+        if (res.ok && Array.isArray(playlists)) {
+            playlists.forEach(pl => {
+                const opt = document.createElement("option");
+                opt.value = pl.name;
+                opt.textContent = pl.name;
+                select.appendChild(opt);
+            });
+        }
+    } catch (err) {
+        console.error("Failed to load playlists", err);
+    }
 
     addToFavModal.show();
 }
 
-document.getElementById("confirmAddToFav").addEventListener("click", () => {
+document.getElementById("confirmAddToFav").addEventListener("click", async () => {
     if (!pendingVideo) return;
+
     const select = document.getElementById("playlistSelect");
     const input = document.getElementById("newPlaylistInput");
 
-    const selectedPlaylist = select.value;
-    const newPlaylistName = input.value.trim();
+    const playlistName = input.value.trim() || select.value;
 
-    if (!selectedPlaylist && !newPlaylistName) {
+    if (!playlistName) {
         alert("Please select or create a playlist");
         return;
     }
 
-    const { users, user } = getCurrentUser();
-    if (!user.playlists) user.playlists = [];
+    const userId = getCurrentUserId();
 
-    let playlist;
+    try {
+        const response = await fetch(`/api/playlists/${userId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                playlistName,
+                video: {
+                    ...pendingVideo,
+                    rating: 0
+                }
+            })
+        });
 
-    // Case 1: existing playlist selected
-    if (selectedPlaylist) {
-        playlist = user.playlists.find(p => p.name === selectedPlaylist);
-    }
+        const data = await response.json();
 
-    // Case 2: new playlist name entered
-    if (newPlaylistName) {
-        const nameExists = user.playlists.some(p => p.name === newPlaylistName);
-        if (nameExists) {
-            alert("A playlist with this name already exists. Please select it from the list.");
+        if (!response.ok) {
+            alert(data.error || "Failed to save to playlist");
             return;
         }
 
-        playlist = {
-            id: Date.now(),
-            name: newPlaylistName,
-            videos: []
-        };
-        user.playlists.push(playlist);
+        if (pendingFavButton) {
+            markAsInFavorite(pendingFavButton);
+            pendingFavButton = null;
+        }
+
+        const playlist = userPlaylistsCache.find(p => p.name === playlistName);
+        if (playlist) {
+            playlist.videos.push({ videoId: pendingVideo.videoId });
+        } else {
+            userPlaylistsCache.push({
+                name: playlistName,
+                videos: [{ videoId: pendingVideo.videoId }]
+            });
+        }
+
+        addToFavModal.hide();
+        showToast(`Saved to "${playlistName}"`, data.playlistId);
+
+        pendingVideo = null;
+
+    } catch (err) {
+        console.error(err);
+        alert("Server error while saving playlist");
     }
-
-    // Prevents duplicate video (extra check)
-    const exists = playlist.videos.some(v => v.videoId === pendingVideo.videoId);
-    if (exists) {
-        alert("This video is already in this playlist");
-        return;
-    }
-
-    playlist.videos.push({
-        ...pendingVideo,
-        rating: 0
-    });
-
-    localStorage.setItem("users", JSON.stringify(users));
-
-    addToFavModal.hide();
-    showToast(`Saved to "${playlist.name}"`, playlist.id);
-
-    if (pendingFavButton) {
-        markAsInFavorite(pendingFavButton);
-        pendingFavButton = null;
-    }
-
-    pendingVideo = null;
 });
-
-
 
 function showToast(message, playlistId) {
     const toast = document.createElement("div");
@@ -349,7 +349,7 @@ function showToast(message, playlistId) {
             <div class="toast-body">
                 ${message}
                 <br>
-                <a href="playlist.html?name=${playlistId}" class="text-white text-decoration-underline">
+                <a href="playlist.html?id=${playlistId}" class="text-white text-decoration-underline">
                     Go to playlist
                 </a>
             </div>
@@ -360,4 +360,10 @@ function showToast(message, playlistId) {
     document.body.appendChild(toast);
 
     setTimeout(() => toast.remove(), 4000);
+}
+
+function isVideoInFavorites(videoId) {
+    return userPlaylistsCache.some(pl =>
+        pl.videos.some(v => v.videoId === videoId)
+    );
 }

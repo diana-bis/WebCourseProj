@@ -1,20 +1,20 @@
-function loadUserHeader() {
+async function loadUserHeader() {
   const header = document.getElementById("header");
   if (!header) return; // if page has no header element, do nothing
 
   const currentUserId = sessionStorage.getItem("currentUserId");
-
   if (!currentUserId) {
-    // If user is not logged in — redirect to login page
     window.location.href = "login.html";
     return;
   }
 
-  const users = JSON.parse(localStorage.getItem("users")) || [];
-  const user = users.find(u => u.id === Number(currentUserId));
-
-  if (!user) {
-    // Corrupted session - force logout
+  let user;
+  try {
+    const res = await fetch(`/api/users/${currentUserId}`);
+    if (!res.ok) throw new Error("User not found");
+    user = await res.json();
+  } catch (err) {
+    // Corrupted session → force logout
     sessionStorage.removeItem("currentUserId");
     window.location.href = "login.html";
     return;
@@ -61,6 +61,7 @@ function loadUserHeader() {
   const logoutBtn = document.getElementById("logoutBtn");
   logoutBtn.addEventListener("click", () => {
     sessionStorage.removeItem("currentUserId");
+    sessionStorage.removeItem("lastSearchUrl");
     window.location.href = "login.html";
   });
 }

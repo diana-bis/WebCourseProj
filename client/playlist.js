@@ -1,11 +1,14 @@
-// Get current user
-function getCurrentUser() {
-    const userId = Number(sessionStorage.getItem("currentUserId"));
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-    return {
-        users,
-        user: users.find(u => u.id === userId)
-    };
+function getCurrentUserId() {
+    return sessionStorage.getItem("currentUserId");
+}
+
+async function fetchPlaylists() {
+    const userId = getCurrentUserId();
+    if (!userId) return [];
+
+    const res = await fetch(`/api/playlists/${userId}`);
+    if (!res.ok) return [];
+    return await res.json();
 }
 
 const playlistList = document.getElementById("playlistList");
@@ -41,11 +44,11 @@ window.addEventListener("DOMContentLoaded", () => {
     loadPlaylists();
 });
 
-function loadPlaylists() {
-    const { user } = getCurrentUser();
+async function loadPlaylists() {
+    const playlists = await fetchPlaylists();
     playlistList.innerHTML = "";
 
-    if (!user.playlists || user.playlists.length === 0) {
+    if (!playlists.length) {
         playlistList.innerHTML =
             `<li class="list-group-item text-muted">No playlists yet</li>`;
         return;
@@ -55,7 +58,7 @@ function loadPlaylists() {
     let firstPlaylistId = null;
     let foundFromURL = false;
 
-    user.playlists.forEach(pl => {
+    playlists.forEach(pl => {
         const li = document.createElement("li");
         li.className = "list-group-item list-group-item-action";
         li.textContent = pl.name;
@@ -64,11 +67,12 @@ function loadPlaylists() {
 
         if (playlistIdFromURL === pl.id) {
             selectPlaylist(pl.id);
-            li.classList.add("active");
             foundFromURL = true;
         }
 
         li.addEventListener("click", () => {
+            document.querySelectorAll("#playlistList .list-group-item").forEach(x => x.classList.remove("active"));
+
             history.pushState({}, "", `playlist.html?id=${pl.id}`);
             selectPlaylist(pl.id);
         });
@@ -84,9 +88,9 @@ function loadPlaylists() {
 }
 
 
-function selectPlaylist(playlistId) {
-    const { user } = getCurrentUser();
-    const playlist = user.playlists.find(p => p.id === playlistId);
+async function selectPlaylist(playlistId) {
+    const playlists = await fetchPlaylists();
+    const playlist = playlists.find(p => p.id === playlistId);
     if (!playlist) return;
 
     selectedPlaylistId = playlistId;
@@ -164,43 +168,37 @@ function selectPlaylist(playlistId) {
         const removeBtn = col.querySelector(".removeBtn");
 
         col.querySelectorAll("[data-star]").forEach(starEl => {
-            starEl.addEventListener("click", (e) => {
+            starEl.addEventListener("click", async (e) => {
                 e.stopPropagation();
 
                 const rating = Number(starEl.dataset.star);
+                const userId = getCurrentUserId();
 
-                const { users, user } = getCurrentUser();
-                const playlist = user.playlists.find(p => p.id === selectedPlaylistId);
-
-                const realVideo = playlist.videos.find(
-                    v => v.videoId === video.videoId
+                await fetch(
+                    `/api/playlists/${userId}/${selectedPlaylistId}/video/${video.videoId}`,
+                    {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ rating })
+                    }
                 );
-
-                realVideo.rating = rating;
-
-                localStorage.setItem("users", JSON.stringify(users));
 
                 selectPlaylist(selectedPlaylistId);
             });
         });
 
-        removeBtn.addEventListener("click", (e) => {
-            e.stopPropagation(); // prevents play click
+        removeBtn.addEventListener("click", async (e) => {
+            e.stopPropagation();
 
             if (!confirm("Remove this video from playlist?")) return;
 
-            const { users, user } = getCurrentUser();
-            const playlist = user.playlists.find(p => p.id === selectedPlaylistId);
+            const userId = getCurrentUserId();
 
-            // Remove video by index
-            const index = playlist.videos.findIndex(
-                v => v.videoId === video.videoId
+            await fetch(
+                `/api/playlists/${userId}/${selectedPlaylistId}/video/${video.videoId}`,
+                { method: "DELETE" }
             );
-            playlist.videos.splice(index, 1);
 
-            localStorage.setItem("users", JSON.stringify(users));
-
-            // Refresh playlist UI
             selectPlaylist(selectedPlaylistId);
         });
 
@@ -216,31 +214,29 @@ function selectPlaylist(playlistId) {
     });
 }
 
-// Create new playlist
-document.getElementById("createPlaylistBtn").addEventListener("click", () => {
+document.getElementById("createPlaylistBtn").addEventListener("click", async () => {
     const input = document.getElementById("newPlaylistName");
     const name = input.value.trim();
-    if (!name) return alert("Please enter a playlist name");
-
-    const { users, user } = getCurrentUser();
-
-    if (!user.playlists) user.playlists = [];
-
-    const exists = user.playlists.some(p => p.name === name);
-    if (exists) {
-        alert("A playlist with this name already exists");
+    if (!name) {
+        alert("Please enter a playlist name");
         return;
     }
 
-    user.playlists.push({
-        id: Date.now(),
-        name,
-        videos: []
+    const userId = getCurrentUserId();
+
+    const res = await fetch(`/api/playlists/${userId}/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name })
     });
 
-    localStorage.setItem("users", JSON.stringify(users));
+    if (!res.ok) {
+        alert("Playlist already exists");
+        return;
+    }
+
     input.value = "";
-    loadPlaylists();
+    await loadPlaylists();
 
     const modal = bootstrap.Modal.getInstance(
         document.getElementById("createPlaylistModal")
@@ -281,10 +277,7 @@ function playCurrentVideo() {
 
 
 playPlaylistBtn.addEventListener("click", () => {
-    const { user } = getCurrentUser();
-    const playlist = user.playlists.find(p => p.id === selectedPlaylistId);
-
-    if (!playlist || playlist.videos.length === 0) {
+    if (!currentSortedVideos.length) {
         alert("Playlist is empty");
         return;
     }
@@ -296,22 +289,16 @@ playPlaylistBtn.addEventListener("click", () => {
     playCurrentVideo();
 });
 
-
-deletePlaylistBtn.addEventListener("click", () => {
+deletePlaylistBtn.addEventListener("click", async () => {
     if (!selectedPlaylistId) return;
-
     if (!confirm("Are you sure you want to delete this playlist?")) return;
 
-    const { users, user } = getCurrentUser();
+    const userId = getCurrentUserId();
 
-    const index = user.playlists.findIndex(
-        p => p.id === selectedPlaylistId
+    await fetch(
+        `/api/playlists/${userId}/${selectedPlaylistId}`,
+        { method: "DELETE" }
     );
-
-    if (index === -1) return;
-
-    user.playlists.splice(index, 1);
-    localStorage.setItem("users", JSON.stringify(users));
 
     selectedPlaylistId = null;
     songsContainer.innerHTML = "";
@@ -320,7 +307,6 @@ deletePlaylistBtn.addEventListener("click", () => {
     playPlaylistBtn.disabled = true;
     deletePlaylistBtn.disabled = true;
 
-    // Reload playlist list
     history.replaceState({}, "", "playlist.html");
     loadPlaylists();
 });
