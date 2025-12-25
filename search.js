@@ -15,6 +15,7 @@ let pendingFavButton = null;
 // Prevents access without login
 window.addEventListener("DOMContentLoaded", async () => {
     if (!sessionStorage.getItem("currentUserId")) {
+
         window.location.replace("login.html");
         return;
     }
@@ -349,7 +350,7 @@ function showToast(message, playlistId) {
             <div class="toast-body">
                 ${message}
                 <br>
-                <a href="playlist.html?name=${playlistId}" class="text-white text-decoration-underline">
+                <a href="playlist.html?id=${playlistId}" class="text-white text-decoration-underline">
                     Go to playlist
                 </a>
             </div>

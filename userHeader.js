@@ -6,6 +6,8 @@ function loadUserHeader() {
 
   if (!currentUserId) {
     // If user is not logged in — redirect to login page
+    sessionStorage.removeItem("currentUserId");
+    sessionStorage.removeItem("lastSearchUrl");
     window.location.href = "login.html";
     return;
   }
@@ -16,6 +18,7 @@ function loadUserHeader() {
   if (!user) {
     // Corrupted session - force logout
     sessionStorage.removeItem("currentUserId");
+    sessionStorage.removeItem("lastSearchUrl");
     window.location.href = "login.html";
     return;
   }
@@ -61,6 +64,7 @@ function loadUserHeader() {
   const logoutBtn = document.getElementById("logoutBtn");
   logoutBtn.addEventListener("click", () => {
     sessionStorage.removeItem("currentUserId");
+    sessionStorage.removeItem("lastSearchUrl");
     window.location.href = "login.html";
   });
 }
