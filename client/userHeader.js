@@ -21,28 +21,31 @@ async function loadUserHeader() {
   }
 
   header.innerHTML = `
-    <nav class="navbar navbar-light bg-white shadow-sm px-4">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm px-4 nav-colorful">
       <div class="container-fluid d-flex justify-content-between align-items-center">
 
-        <!-- Left side -->
-        <div class="d-flex gap-3">
-          <a href="search.html" id="searchLink" class="nav-link fw-semibold">🔍 Search</a>
-          <a href="playlist.html" class="nav-link fw-semibold">🎵 My Playlists</a>
+        <div class="d-flex align-items-center gap-4">
+          <span class="fw-bold student-name fs-4 me-3">MusicHub</span>
+          <div class="d-flex gap-2">
+            <a href="search.html" id="searchLink" class="nav-link-custom">🔍 Search</a>
+            <a href="playlist.html" class="nav-link-custom">🎵 My Playlists</a>
+          </div>
         </div>
 
-        <!-- Right side -->
-        <div class="d-flex align-items-center gap-3">
+        <div class="d-flex align-items-center gap-3 bg-light rounded-pill ps-2 pe-3 py-1 border">
           <img
             src="${user.image}"
             alt="Profile"
-            width="40"
-            height="40"
-            class="rounded-circle"
+            width="35"
+            height="35"
+            class="rounded-circle border border-2 border-white shadow-sm"
           />
-          <span class="fw-semibold">
-            Welcome ${user.firstname}!
-          </span>
-          <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Logout</button>
+          <div class="d-none d-md-block">
+            <span class="small text-muted d-block" style="font-size: 0.7rem;">Account</span>
+            <span class="user-name-text small"> ${user.firstname}
+            </span>
+          </div>
+          <button id="logoutBtn" class="btn btn-link p-0 text-danger text-decoration-none fw-bold small ms-2" style="font-size: 0.8rem;">Logout</button>
         </div>
 
       </div>

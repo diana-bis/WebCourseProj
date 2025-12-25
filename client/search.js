@@ -127,7 +127,7 @@ async function searchYouTube() {
     try {
         // Search videos by query
         const searchResponse = await fetch(
-            `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=16&q=${encodeURIComponent(query)}&key=${API_KEY}`
+            `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=20&q=${encodeURIComponent(query)}&key=${API_KEY}`
         );
         const searchData = await searchResponse.json(); // Converts API response to a JavaScript object
 
@@ -173,22 +173,27 @@ async function searchYouTube() {
             card.className = "col-md-3 col-sm-6";
 
             card.innerHTML = `
-                <div class="card h-100 shadow-sm">
-                    <img
-                    src="${thumbnail}"
-                    class="card-img-top open-video"
-                    style="cursor:pointer"
-                    alt="thumbnail"
-                    />
-                    <div class="card-body d-flex flex-column">
-                        <h6 class="card-title text-truncate open-video" title="${title}" style="cursor:pointer">${title}</h6>
-                        <p class="mb-1"><strong>Channel:</strong> ${channel}</p>
-                        <p class="mb-1"><strong>Duration:</strong> ${duration}</p>
-                        <p class="mb-2"><strong>Views:</strong> ${views}</p>
-                        <button class="btn btn-outline-primary mt-auto favBtn">Add to Favorites</button>
+                <div class="result-card shadow-sm">
+                    <div class="result-img-container">
+                        <img src="${thumbnail}" class="result-img open-video" alt="${title}">
+                        <div class="play-overlay open-video">
+                            <div class="btn-play">▶</div>
+                        </div>
+                        <div class="position-absolute bottom-0 end-0 m-2">
+                            <span class="badge bg-dark opacity-75">${duration}</span>
+                        </div>
+                    </div>
+                    <div class="card-body d-flex flex-column p-3">
+                        <h6 class="fw-bold mb-1 text-truncate open-video" title="${title}" style="cursor:pointer">${title}</h6>
+                        <p class="text-muted small mb-0 text-truncate"><strong>Channel:</strong> ${channel}</p>
+                        <p class="text-muted mb-3" style="font-size: 0.75rem;">${views} views</p>
+                        
+                        <button class="btn btn-outline-primary btn-sm rounded-pill mt-auto favBtn">
+                            + Add to Playlist
+                        </button>
                     </div>
                 </div>
-                `;
+            `;
 
             card.querySelectorAll(".open-video").forEach(el => {
                 el.addEventListener("click", () => openModal(videoId));

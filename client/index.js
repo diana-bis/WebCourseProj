@@ -13,19 +13,25 @@ async function loadConfig() {
         const content = document.getElementById("content");
 
         content.innerHTML = `
-      <h2>Student name:</h2>
-      <p>${config.student.name}</p>
+      <div class="mb-4 text-center">
+                <h3 class="fw-bold text-dark">${config.student.name}</h3>
+                <span class="badge bg-light text-dark border">${config.student.id}</span>
+            </div>
 
-      <h2>Student ID:</h2>
-      <p>${config.student.id}</p>
+            <hr class="my-4 opacity-10">
 
-      <h2>Links:</h2>
-      <ul>
-        ${config.links
-                .map(link => `<li><a href="${link.url}">${link.text}</a></li>`)
-                .join("")}
-      </ul>
-    `;
+            <h5 class="fw-bold mb-3">Navigation Links</h5>
+            <div class="list-group list-group-flush">
+                ${config.links
+                .map(link => `
+                        <a href="${link.url}" class="playlist-item text-decoration-none text-dark rounded mb-2">
+                            <div>
+                                <div class="fw-bold">${link.text}</div>
+                            </div>
+                        </a>
+                    `).join("")}
+            </div>
+        `;
     } catch (err) {
         console.error("Failed to load config.json", err);
     }

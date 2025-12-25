@@ -162,27 +162,43 @@ async function selectPlaylist(playlistId) {
 
     videos.forEach((video, index) => {
         const col = document.createElement("div");
-        col.className = "col-md-3 col-sm-4";
+        col.className = "col-12 mb-3";
 
         col.innerHTML = `
-            <div class="card h-100 shadow-sm">
-                <img src="${video.thumbnail}" class="card-img-top playlist-thumb" />
-                    <div class="card-body text-center">
-                        <h6 class="card-title">${video.title}</h6>
-                            <div class="mb-2">
-                                ${[1, 2, 3, 4, 5].map(star => `
-                                    <span
-                                        class="fs-5 me-1 ${video.rating >= star ? 'text-warning' : 'text-secondary'}"
-                                        role="button"
-                                        data-star="${star}">★
-                                    </span>
-                                `).join("")}
-                            </div>
-                        
-                        <button class="btn btn-outline-danger btn-sm removeBtn">Remove</button>
-                    </div> 
+            <div class="song-card shadow-sm mb-2" style="cursor: pointer;">
+                <div class="position-relative">
+                    <img src="${video.thumbnail}" class="song-thumb shadow-sm" alt="thumbnail" />
+                    <div class="play-overlay rounded" style="opacity: 0; position: absolute; top: 0; left: 0; width: 60px; height: 60px; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; transition: 0.3s;">
+                        <span class="text-white small">▶</span>
+                    </div>
+                </div>
+                
+                <div class="flex-grow-1 px-3">
+                    <h6 class="fw-bold mb-0 text-dark">${video.title}</h6>
+                    <div class="d-flex align-items-center mt-1">
+                        ${[1, 2, 3, 4, 5].map(star => `
+                        <span class="star-btn ${video.rating >= star ? 'text-warning' : 'text-light-gray'}" 
+                            data-star="${star}">★</span>
+                    `).join("")}
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge rounded-pill bg-light text-primary border me-2 px-3 py-2">
+                        ${video.type === 'mp3' ? '🎵 MP3' : '📺 Video'}
+                    </span>
+                    <button class="btn btn-link text-danger p-0 removeBtn" title="Remove from playlist">
+                        <span class="fs-5">🗑️</span>
+                    </button>
+                </div>
             </div>
         `;
+
+        // Add a quick CSS hover effect for the overlay in JS
+        const cardEl = col.querySelector('.song-card');
+        const overlay = col.querySelector('.play-overlay');
+        cardEl.onmouseenter = () => overlay.style.opacity = "1";
+        cardEl.onmouseleave = () => overlay.style.opacity = "0";
 
         const removeBtn = col.querySelector(".removeBtn");
 
