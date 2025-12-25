@@ -4,7 +4,18 @@ const path = require("path");
 const app = express();
 const PORT = 3000;
 
+const crypto = require("crypto");
+
 const PLAYLISTS_DIR = path.join(__dirname, "playlists");
+
+const multer = require("multer");
+
+const UPLOADS_DIR = path.join(__dirname, "uploads");
+
+if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR);
+}
+app.use("/uploads", express.static(UPLOADS_DIR));
 
 app.use(express.json());
 // Serve static files (HTML, CSS, JS)
@@ -152,11 +163,20 @@ app.post("/api/playlists/:userId", (req, res) => {
         playlists.push(playlist);
     }
 
-    if (playlist.videos.some(v => v.videoId === video.videoId)) {
-        return res.status(409).json({ error: "Video already exists" });
+    const ytItem = {
+        id: video.videoId,
+        type: "youtube",
+        videoId: video.videoId,
+        title: video.title,
+        thumbnail: video.thumbnail,
+        rating: 0
+    };
+
+    if (playlist.videos.some(v => v.id === ytItem.id)) {
+        return res.status(409).json({ error: "Item already exists in playlist" });
     }
 
-    playlist.videos.push(video);
+    playlist.videos.push(ytItem);
     savePlaylists(userId, playlists);
 
     res.json({
@@ -210,8 +230,8 @@ app.delete("/api/playlists/:userId/:playlistId", (req, res) => {
 });
 
 // remove a video from playlist
-app.delete("/api/playlists/:userId/:playlistId/video/:videoId", (req, res) => {
-    const { userId, playlistId, videoId } = req.params;
+app.delete("/api/playlists/:userId/:playlistId/video/:id", (req, res) => {
+    const { userId, playlistId, id } = req.params;
 
     const playlists = readPlaylists(userId);
     const playlist = playlists.find(p => p.id == playlistId);
@@ -219,16 +239,16 @@ app.delete("/api/playlists/:userId/:playlistId/video/:videoId", (req, res) => {
         return res.status(404).json({ error: "Playlist not found" });
     }
 
-    playlist.videos = playlist.videos.filter(v => v.videoId !== videoId);
+    playlist.videos = playlist.videos.filter(v => v.id !== id);
     savePlaylists(userId, playlists);
 
-    res.json({ message: "Video removed" });
+    res.json({ message: "Item removed" });
 });
 
 
 //upsate rating
-app.put("/api/playlists/:userId/:playlistId/video/:videoId", (req, res) => {
-    const { userId, playlistId, videoId } = req.params;
+app.put("/api/playlists/:userId/:playlistId/video/:id", (req, res) => {
+    const { userId, playlistId, id } = req.params;
     const { rating } = req.body;
 
     const playlists = readPlaylists(userId);
@@ -237,18 +257,85 @@ app.put("/api/playlists/:userId/:playlistId/video/:videoId", (req, res) => {
         return res.status(404).json({ error: "Playlist not found" });
     }
 
-    const video = playlist.videos.find(v => v.videoId === videoId);
-    if (!video) {
-        return res.status(404).json({ error: "Video not found" });
+    const item = playlist.videos.find(v => v.id === id);
+    if (!item) {
+        return res.status(404).json({ error: "Item not found" });
     }
 
-    video.rating = rating;
+    item.rating = rating;
     savePlaylists(userId, playlists);
 
     res.json({ message: "Rating updated" });
 });
 
+
 // Start server
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 });
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, UPLOADS_DIR);
+    },
+    filename: (req, file, cb) => {
+        const uniqueName = Date.now() + "-" + file.originalname;
+        cb(null, uniqueName);
+    }
+});
+
+const upload = multer({
+    storage,
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith("audio/")) {
+            cb(null, true);
+        } else {
+            cb(new Error("Only audio files are allowed"));
+        }
+    }
+
+});
+
+app.post("/api/playlists/:userId/:playlistId/upload", upload.single("mp3"), (req, res) => {
+    const { userId, playlistId } = req.params;
+
+    if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const playlists = readPlaylists(userId);
+    const playlist = playlists.find(p => p.id == playlistId);
+
+    if (!playlist) {
+        return res.status(404).json({ error: "Playlist not found" });
+    }
+
+    // Prevent duplicate MP3 (by original filename)
+    if (
+        playlist.videos.some(
+            v => v.type === "mp3" && v.title === req.file.originalname
+        )
+    ) {
+        // remove uploaded file
+        fs.unlinkSync(req.file.path);
+
+        return res.status(409).json({
+            error: "MP3 already exists in playlist"
+        });
+    }
+
+    const mp3Item = {
+        id: crypto.randomUUID(),
+        type: "mp3",
+        title: req.file.originalname,
+        filePath: `/uploads/${req.file.filename}`,
+        thumbnail: "/images/Gemini_Generated_mp3.png",
+        rating: 0
+    };
+
+    playlist.videos.push(mp3Item);
+    savePlaylists(userId, playlists);
+
+    res.json({ message: "MP3 added to playlist", item: mp3Item });
+}
+);

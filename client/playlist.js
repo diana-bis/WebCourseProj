@@ -44,6 +44,21 @@ window.addEventListener("DOMContentLoaded", () => {
     loadPlaylists();
 });
 
+function stopAllPlayers() {
+    const audioPlayer = document.getElementById("audioPlayer");
+
+    // Stop MP3
+    if (audioPlayer) {
+        audioPlayer.pause();
+        audioPlayer.currentTime = 0;
+    }
+
+    // Stop YouTube
+    if (ytPlayerInstance && ytPlayerInstance.stopVideo) {
+        ytPlayerInstance.stopVideo();
+    }
+}
+
 async function loadPlaylists() {
     const playlists = await fetchPlaylists();
     playlistList.innerHTML = "";
@@ -89,6 +104,10 @@ async function loadPlaylists() {
 
 
 async function selectPlaylist(playlistId) {
+    document
+        .getElementById("uploadMp3Wrapper")
+        .classList.remove("d-none");
+
     const playlists = await fetchPlaylists();
     const playlist = playlists.find(p => p.id === playlistId);
     if (!playlist) return;
@@ -147,7 +166,7 @@ async function selectPlaylist(playlistId) {
 
         col.innerHTML = `
             <div class="card h-100 shadow-sm">
-                <img src="${video.thumbnail}" class="card-img-top" />
+                <img src="${video.thumbnail}" class="card-img-top playlist-thumb" />
                     <div class="card-body text-center">
                         <h6 class="card-title">${video.title}</h6>
                             <div class="mb-2">
@@ -175,7 +194,7 @@ async function selectPlaylist(playlistId) {
                 const userId = getCurrentUserId();
 
                 await fetch(
-                    `/api/playlists/${userId}/${selectedPlaylistId}/video/${video.videoId}`,
+                    `/api/playlists/${userId}/${selectedPlaylistId}/video/${video.id}`,
                     {
                         method: "PUT",
                         headers: { "Content-Type": "application/json" },
@@ -195,7 +214,7 @@ async function selectPlaylist(playlistId) {
             const userId = getCurrentUserId();
 
             await fetch(
-                `/api/playlists/${userId}/${selectedPlaylistId}/video/${video.videoId}`,
+                `/api/playlists/${userId}/${selectedPlaylistId}/video/${video.id}`,
                 { method: "DELETE" }
             );
 
@@ -203,6 +222,7 @@ async function selectPlaylist(playlistId) {
         });
 
         col.addEventListener("click", () => {
+            stopAllPlayers();
             playingPlaylist = videos;   // full playlist
             currentVideoIndex = index;            // start from clicked song
 
@@ -267,12 +287,36 @@ function onPlayerStateChange(event) {
 }
 
 function playCurrentVideo() {
-    if (!ytPlayerInstance) return;
     if (currentVideoIndex >= playingPlaylist.length) return;
 
-    ytPlayerInstance.loadVideoById(
-        playingPlaylist[currentVideoIndex].videoId
-    );
+    stopAllPlayers();
+
+    const item = playingPlaylist[currentVideoIndex];
+
+    const ytWrapper = document.getElementById("playerWrapper");
+    const audioWrapper = document.getElementById("audioPlayerWrapper");
+    const audioPlayer = document.getElementById("audioPlayer");
+
+    // MP3
+    if (item.type === "mp3") {
+        ytWrapper.classList.add("d-none");
+        audioWrapper.classList.remove("d-none");
+
+        audioPlayer.src = item.filePath;
+        audioPlayer.play();
+
+        audioPlayer.onended = () => {
+            currentVideoIndex++;
+            playCurrentVideo();
+        };
+    }
+    // YouTube
+    else {
+        audioWrapper.classList.add("d-none");
+        ytWrapper.classList.remove("d-none");
+
+        ytPlayerInstance.loadVideoById(item.videoId);
+    }
 }
 
 
@@ -309,4 +353,40 @@ deletePlaylistBtn.addEventListener("click", async () => {
 
     history.replaceState({}, "", "playlist.html");
     loadPlaylists();
+});
+
+document.getElementById("mp3FileInput").addEventListener("change", async () => {
+
+    if (!selectedPlaylistId) {
+        alert("Select a playlist first");
+        return;
+    }
+
+    const fileInput = document.getElementById("mp3FileInput");
+    const file = fileInput.files[0];
+
+    if (!file) {
+        alert("Choose an MP3 file");
+        return;
+    }
+
+    const userId = getCurrentUserId();
+    const formData = new FormData();
+    formData.append("mp3", file);
+
+    const res = await fetch(
+        `/api/playlists/${userId}/${selectedPlaylistId}/upload`,
+        {
+            method: "POST",
+            body: formData
+        }
+    );
+
+    if (!res.ok) {
+        alert("Upload failed, song already exsists");
+        return;
+    }
+
+    fileInput.value = "";
+    selectPlaylist(selectedPlaylistId);
 });
