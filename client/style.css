@@ -1,8 +1,5 @@
-/* style.css */
-
 :root {
     --accent-color: #1db954;
-    /* Spotify Green */
     --gradient-start: #6e8efb;
     --gradient-end: #a777e3;
 }
@@ -12,17 +9,13 @@ body {
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* Header with Gradient */
 header {
-    /* Remove the forced colorful background from the container */
     background: transparent;
     color: #333;
-    /* Default text to dark */
     padding: 0;
     margin-bottom: 2rem;
 }
 
-/* New class for the big colorful header on index.html */
 .index-header {
     background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
     color: white !important;
@@ -30,13 +23,11 @@ header {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* Ensure the username text is explicitly dark */
 .user-name-text {
     color: #333 !important;
     font-weight: 700;
 }
 
-/* Overlapping effect for the main container */
 .main-container {
     max-width: 900px;
     margin-top: -50px;
@@ -46,10 +37,8 @@ header {
     border: none;
     border-radius: 12px;
     overflow: hidden;
-    /* Ensures child elements don't break border radius */
 }
 
-/* Classes for your JavaScript to use */
 .playlist-item {
     display: flex;
     align-items: center;
@@ -62,17 +51,6 @@ header {
     background-color: #f8f9ff;
     transform: scale(1.01);
     cursor: pointer;
-}
-
-.song-icon {
-    width: 40px;
-    height: 40px;
-    background-color: #e9ecef;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 15px;
 }
 
 .auth-body {
@@ -97,7 +75,6 @@ header {
     left: 0;
 }
 
-/* Customizing the Button to match the theme */
 .btn-primary {
     background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
     border: none;
@@ -143,7 +120,6 @@ a:hover {
     box-shadow: 0 10px 25px rgba(110, 142, 251, 0.3) !important;
 }
 
-/* Result Card Styling */
 .result-card {
     border: none;
     border-radius: 15px;
@@ -209,7 +185,7 @@ a:hover {
 
 /* Sidebar Styling */
 aside.col-md-3 {
-    background-color: white !important;
+    background: white;
     min-height: calc(100vh - 80px);
     border-radius: 0 20px 20px 0;
     box-shadow: 4px 0 15px rgba(0, 0, 0, 0.03);
@@ -217,53 +193,52 @@ aside.col-md-3 {
 
 #playlistList .list-group-item {
     border: none;
-    margin-bottom: 5px;
-    border-radius: 10px !important;
-    transition: all 0.2s;
+    border-radius: 10px;
     font-weight: 500;
     color: #555;
+    transition: 0.2s;
 }
 
-#playlistList .list-group-item.active {
-    background: var(--primary-gradient);
-    color: white;
-    box-shadow: 0 4px 12px rgba(110, 142, 251, 0.3);
-}
-
-#playlistList .list-group-item:hover:not(.active) {
-    background-color: #f0f3ff;
+#playlistList .list-group-item:hover {
+    background: #f0f3ff;
     color: var(--gradient-start);
     transform: translateX(5px);
 }
 
-/* Song Container Styling */
+#playlistList .list-group-item.active {
+    background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+    color: white;
+}
+
 .song-card {
-    background: white;
-    border-radius: 15px;
-    padding: 12px;
     display: flex;
     align-items: center;
-    transition: all 0.3s ease;
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    background: white;
+    border-radius: 12px;
+    padding: 10px 15px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    min-height: 85px;
+    width: 100%;
+    transition: all 0.2s ease;
 }
 
 .song-card:hover {
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     transform: translateY(-2px);
 }
 
 .song-thumb {
     width: 60px;
     height: 60px;
-    border-radius: 10px;
+    border-radius: 8px;
     object-fit: cover;
-    margin-right: 15px;
+    flex-shrink: 0;
 }
+
 
 /* Rating Stars Color */
 .text-warning {
     color: #ffc107 !important;
-    /* Gold stars */
 }
 
 .star-btn {
@@ -278,10 +253,8 @@ aside.col-md-3 {
 
 .text-light-gray {
     color: #e0e0e0;
-    /* Very light gray for empty stars */
 }
 
-/* Ensure the playlist items look like a list on all screens */
 #songsContainer .col-12 {
     transition: all 0.2s ease;
 }
@@ -324,7 +297,6 @@ aside.col-md-3 {
     color: var(--gradient-start);
 }
 
-/* Make the brand look like your colorful theme */
 .student-name {
     background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
     background-clip: text;
@@ -336,7 +308,6 @@ aside.col-md-3 {
     letter-spacing: -1px;
 }
 
-/* Subtle pulse for the Logout link */
 #logoutBtn:hover {
     text-decoration: underline !important;
     opacity: 0.8;
@@ -348,98 +319,7 @@ aside.col-md-3 {
     letter-spacing: 0.5px;
 }
 
-/* Ensure text in active sidebar items is easy to read */
-#playlistList .list-group-item.active {
-    background: var(--primary-gradient) !important;
-    border: none;
-    color: white !important;
-}
-
-#playlistList .list-group-item-action:active {
-    background-color: var(--gradient-start);
-}
-
-/* Ensure all song cards are consistent */
-.song-card {
-    min-height: 80px;
-    /* Forces uniform height */
-    display: flex;
-    align-items: center;
-    justify-content: d-flex;
-    /* Push content apart */
-    background: white;
-    border-radius: 12px;
-    padding: 10px 15px;
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    width: 100%;
-    /* Ensure it fills the column */
-}
-
-/* Container for Title and Stars */
-.song-info {
-    flex-grow: 1;
-    /* Takes up all available middle space */
-    min-width: 0;
-    /* Allows text-truncate to work */
-}
-
-/* Container for Badge and Trash */
-.song-actions {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    flex-shrink: 0;
-    /* Prevents icons from squishing */
-}
-
-/* Update these in your style.css */
-
-.song-card {
-    display: flex;
-    align-items: center;
-    background: white;
-    border-radius: 12px;
-    padding: 10px 15px;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    /* Card border */
-    transition: all 0.2s ease;
-    min-height: 85px;
-    /* Ensures all cards are exactly the same height */
-}
-
-.song-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
-    transform: translateY(-2px);
-}
-
-.song-thumb {
-    width: 60px;
-    height: 60px;
-    border-radius: 8px;
-    object-fit: cover;
-    flex-shrink: 0;
-    /* Prevents thumbnail from shrinking */
-}
-
-/* This pushes the trash icon to the right */
 .flex-grow-1 {
     flex-grow: 1;
     min-width: 0;
-    /* Important for text-truncation */
-}
-
-.star-btn {
-    cursor: pointer;
-    font-size: 1.1rem;
-    transition: transform 0.1s ease;
-    display: inline-block;
-}
-
-.star-btn:hover {
-    transform: scale(1.2);
-}
-
-.text-light-gray {
-    color: #e0e0e0;
-    /* Subtle color for empty stars */
 }
