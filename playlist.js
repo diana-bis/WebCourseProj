@@ -64,7 +64,6 @@ function loadPlaylists() {
 
         if (playlistIdFromURL === pl.id) {
             selectPlaylist(pl.id);
-            li.classList.add("active");
             foundFromURL = true;
         }
 
